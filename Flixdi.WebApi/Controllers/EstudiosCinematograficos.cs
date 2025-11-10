@@ -2,10 +2,13 @@
 using Flixdi.Application;
 using Flixdi.Application.Dtos.EstudioCinematografico;
 using Flixdi.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Flixdi.WebApi.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
     public class EstudiosCinematograficosController : ControllerBase

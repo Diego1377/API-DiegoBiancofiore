@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Flixdi.Application.Dtos.Identity_User
+namespace Flixdi.Application.Dtos.Identity.User
 {
     public class UserRegistroRequestDto
     {
@@ -20,6 +20,5 @@ namespace Flixdi.Application.Dtos.Identity_User
         public string Password { get; set; }
         [DataType(DataType.Date)]
         public DateTime? FechaNacimiento { get; set; }
-        
     }
 }
