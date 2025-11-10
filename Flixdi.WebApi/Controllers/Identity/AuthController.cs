@@ -1,5 +1,9 @@
-﻿using Flixdi.Application.Dtos.Identity_User;
+﻿using Flixdi.Application.Dtos.Identity.User;
+using Flixdi.Application.Dtos.Identity_User;
 using Flixdi.Entities.MicrosoftIdentity;
+using Flixdi.Services.AuthServices;
+using Flixdi.WebApi.Configurations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,13 +16,16 @@ namespace Flixdi.WebApi.Controllers.Identity
         {
             private readonly UserManager<User> _userManager;
             private readonly ILogger<PeliculasController> _logger;
-            public AuthController(
+            private readonly ITokenHandlerService _servicioToken;
+        public AuthController(
                 UserManager<User> userManager
-                , ILogger<PeliculasController> logger)
-            {
+                , ILogger<PeliculasController> logger
+                , ITokenHandlerService servicioToken)
+        {
                 _userManager = userManager;
                 _logger = logger;
-            }
+            _servicioToken = servicioToken;
+        }
 
             [HttpPost]
             [Route("Register")]
@@ -97,6 +104,54 @@ namespace Flixdi.WebApi.Controllers.Identity
                     return BadRequest("Los datos enviados no son validos.");
                 }
             }
+        [HttpPost]
+        [Route("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginUserRequestDto userlogin)
+        {
+            if (ModelState.IsValid)
+            {
+                var existeUsuario = await _userManager.FindByEmailAsync(userlogin.Email);
+                if (existeUsuario != null)
+                {
+                    var isCorrect = await _userManager.CheckPasswordAsync(existeUsuario, userlogin.Password);
+                    if (isCorrect)
+                    {
+                        try
+                        {
+                            var parametros = new TokenParameters()
+                            {
+                                Id = existeUsuario.Id.ToString(),
+                                PaswordHash = existeUsuario.PasswordHash,
+                                UserName = existeUsuario.UserName,
+                                Email = existeUsuario.Email
+                            };
+                            var jwt = _servicioToken.GenerateJwtTokens(parametros);
+                            return Ok(new LoginUserResponseDto()
+                            {
+                                Login = true,
+                                Token = jwt,
+                                UserName = existeUsuario.UserName,
+                                Mail = existeUsuario.Email
+                            });
+                        }
+                        catch (Exception)
+                        {
+
+                            throw;
+                        }
+                    }
+                }
+            }
+            return BadRequest(new LoginUserResponseDto()
+            {
+                Login = false,
+                Errores = new List<string>()
+                    {
+                       "Usuario o contraseña incorrecto!"
+                    }
+            });
         }
+    }
     }
 

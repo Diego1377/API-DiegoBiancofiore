@@ -2,14 +2,18 @@
 using Flixdi.Application;
 using Flixdi.Application.Dtos.Pais;
 using Flixdi.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Flixdi.WebApi.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
     public class PaisesController : ControllerBase
     {
+
         private readonly ILogger<PaisesController> _logger;
         private readonly IApplication<Pais> _pais;
         private readonly IMapper _mapper;

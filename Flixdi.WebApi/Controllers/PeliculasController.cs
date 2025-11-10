@@ -1,30 +1,47 @@
 ﻿using AutoMapper;
 using Flixdi.Application;
+using Flixdi.Application.Dtos.Actor;
 using Flixdi.Application.Dtos.Pelicula;
 using Flixdi.Entities;
+using Flixdi.Entities.MicrosoftIdentity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Flixdi.WebApi.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
     public class PeliculasController : ControllerBase
     {
+        private readonly UserManager<User> _userManager;
         private readonly ILogger<PeliculasController> _logger;
         private readonly IApplication<Pelicula> _pelicula;
         private readonly IMapper _mapper;
-        public PeliculasController(ILogger<PeliculasController> logger, IApplication<Pelicula> pelicula, IMapper mapper)
+        public PeliculasController(ILogger<PeliculasController> logger, UserManager<User> userManager, IApplication<Pelicula> pelicula, IMapper mapper)
         {
             _logger = logger;
             _pelicula = pelicula;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
         [HttpGet]
         [Route("All")]
         public async Task<IActionResult> All()
         {
-            return Ok(_mapper.Map<IList<PeliculaResponseDto>>(_pelicula.GetAll()));
+            var id = User.FindFirst("Id").Value.ToString();
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (_userManager.IsInRoleAsync(user, "Administrador").Result)
+            {
+                var name = User.FindFirst("name");
+                var a = User.Claims;
+                return Ok(_mapper.Map<IList<PeliculaResponseDto>>(_pelicula.GetAll()));
+            }
+            return Unauthorized();
+            
         }
 
         [HttpGet]
