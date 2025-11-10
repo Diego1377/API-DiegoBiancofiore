@@ -2,8 +2,10 @@
 using Flixdi.Abstactions;
 using Flixdi.Application;
 using Flixdi.DataAccess;
+using Flixdi.Entities.MicrosoftIdentity;
 using Flixdi.Repository;
 using Flixdi.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Flixdi.WebApi
@@ -20,12 +22,22 @@ namespace Flixdi.WebApi
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
             builder.Services.AddDbContext<DbDataAccess>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                         o => o.MigrationsAssembly("Flixdi.WebApi"));
                 options.UseLazyLoadingProxies();
             });
+
+            builder.Services.AddIdentity<User, Role>(
+            options => options.SignIn.RequireConfirmedAccount = true).
+            AddDefaultTokenProviders().
+            AddEntityFrameworkStores<DbDataAccess>().
+            AddSignInManager<SignInManager<User>>().
+            AddRoleManager<RoleManager<Role>>().
+            AddUserManager<UserManager<User>>();
+
             builder.Services.AddAutoMapper(typeof(Program));
             builder.Services.AddScoped(typeof(IStringServices), typeof(StringServices));
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
