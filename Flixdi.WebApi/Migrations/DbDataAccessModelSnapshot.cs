@@ -53,7 +53,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasIndex("IdPais");
 
-                    b.ToTable("Actores");
+                    b.ToTable("Actores", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.Director", b =>
@@ -84,7 +84,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasIndex("IdPais");
 
-                    b.ToTable("Directores");
+                    b.ToTable("Directores", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.EstudioCinematografico", b =>
@@ -107,7 +107,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasIndex("IdPais");
 
-                    b.ToTable("EstudioCinematografico");
+                    b.ToTable("EstudioCinematografico", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.Genero", b =>
@@ -125,7 +125,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Generos");
+                    b.ToTable("Generos", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.MicrosoftIdentity.Role", b =>
@@ -353,7 +353,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Paises");
+                    b.ToTable("Paises", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.Pelicula", b =>
@@ -390,7 +390,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasIndex("IdEstudioCinematografico");
 
-                    b.ToTable("Peliculas");
+                    b.ToTable("Peliculas", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.PeliculaPorActor", b =>
@@ -413,7 +413,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasIndex("IdPelicula");
 
-                    b.ToTable("PeliculasPorActores");
+                    b.ToTable("PeliculasPorActores", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.PeliculaPorDirector", b =>
@@ -436,7 +436,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasIndex("IdPelicula");
 
-                    b.ToTable("PeliculasPorDirectores");
+                    b.ToTable("PeliculasPorDirectores", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.PeliculaPorGenero", b =>
@@ -459,7 +459,7 @@ namespace Flixdi.WebApi.Migrations
 
                     b.HasIndex("IdPelicula");
 
-                    b.ToTable("PeliculasPorGeneros");
+                    b.ToTable("PeliculasPorGeneros", (string)null);
                 });
 
             modelBuilder.Entity("Flixdi.Entities.Actor", b =>

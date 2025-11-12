@@ -33,5 +33,27 @@ namespace Flixdi.Entities
         public virtual Pais Pais { get; set; }
 
         public virtual ICollection<PeliculaPorActor> PeliculasPorActores { get; set; }
+       
+        
+        #region setters y getters
+        public void SetNombre(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del Actor no puede estar vacío.");
+            Nombre = nombre;
+        }
+
+        public void SetApellido(string apellido)
+        {
+            if (string.IsNullOrWhiteSpace(apellido))
+                throw new ArgumentException("El apellido del Actor no puede estar vacío.");
+            Apellido = apellido;
+        }
+
+        public string GetCompleteName()
+        {
+            return string.Join(", ", Apellido, Nombre);
+        }
+        #endregion
     }
 }

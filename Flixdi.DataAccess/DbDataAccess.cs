@@ -21,6 +21,7 @@ namespace Flixdi.DataAccess
         public virtual DbSet<PeliculaPorActor> PeliculasPorActores { get; set; }
         public virtual DbSet<PeliculaPorDirector> PeliculasPorDirectores { get; set; }
         public virtual DbSet<PeliculaPorGenero> PeliculasPorGeneros { get; set; }
+       
         public DbDataAccess(DbContextOptions<DbDataAccess> options) : base(options) { }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.LogTo(Console.WriteLine).EnableDetailedErrors();
         protected override void OnModelCreating(ModelBuilder modelBuilder)

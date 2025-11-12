@@ -1,6 +1,7 @@
 ﻿using Flixdi.Abstactions;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Flixdi.Entities
 {
@@ -36,7 +37,33 @@ namespace Flixdi.Entities
         public virtual ICollection<PeliculaPorActor> PeliculasPorActores { get; set; }
         public virtual ICollection<PeliculaPorDirector> PeliculasPorDirectores { get; set; }
 
+        #region setters y getters
+        public void SetTitulo(string titulo)
+        {
+            if (string.IsNullOrWhiteSpace(titulo))
+                throw new ArgumentException("El título de la película no puede estar vacío.");
+            Titulo = titulo;
+        }
 
+        public void SetDescripcion(string descripcion)
+        {
+            if (string.IsNullOrWhiteSpace(descripcion))
+                throw new ArgumentException("La descripción no puede estar vacía.");
+            Descripcion = descripcion;
+        }
+
+        public void SetDuracion(int duracion)
+        {
+            if (duracion <= 0)
+                throw new ArgumentException("La duración debe ser un número positivo.");
+            Duracion = duracion;
+        }
+
+        public string GetClassName()
+        {
+            return string.Join(": ", this.GetType().Name, Titulo);
+        }
+        #endregion
 
     }
 }

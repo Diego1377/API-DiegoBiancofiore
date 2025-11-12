@@ -27,5 +27,18 @@ namespace Flixdi.Entities
         public virtual Pais Pais { get; set; }
 
         public virtual ICollection<Pelicula> Peliculas { get; set; }
+
+        #region setters y getters
+        public void SetNombre(string nombre)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del Estudio Cinematofrafico no puede estar vacío.");
+            Nombre = nombre;
+        }
+        public string GetClassName()
+        {
+            return string.Join(": ", this.GetType().BaseType.Name, Nombre);
+        }
+        #endregion
     }
 }
