@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
 using Flixdi.Application;
 using Flixdi.Application.Dtos.Actor;
+using Flixdi.Application.Dtos.Pelicula;
 using Flixdi.Entities;
+using Flixdi.Entities.MicrosoftIdentity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Flixdi.WebApi.Controllers
@@ -13,41 +16,63 @@ namespace Flixdi.WebApi.Controllers
     [ApiController]
     public class ActoresController : ControllerBase
     {
+        private readonly UserManager<User> _userManager;
         private readonly ILogger<ActoresController> _logger;
         private readonly IApplication<Actor> _actor;
         private readonly IMapper _mapper;
 
-        public ActoresController(ILogger<ActoresController> logger, IApplication<Actor> actor, IMapper mapper)
+        public ActoresController(ILogger<ActoresController> logger, UserManager<User> userManager, IApplication<Actor> actor, IMapper mapper)
         {
             _logger = logger;
             _actor = actor;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
         [HttpGet]
         [Route("All")]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> All()
         {
-            return Ok(_mapper.Map<IList<ActorResponseDto>>(_actor.GetAll()));
+            var id = User.FindFirst("Id").Value.ToString();
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
+            {
+                var name = User.FindFirst("name");
+                var a = User.Claims;
+                return Ok(_mapper.Map<IList<ActorResponseDto>>(_actor.GetAll()));
+            }
+            return Unauthorized();
         }
+
 
         [HttpGet]
         [Route("ById")]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> ById(int? Id)
         {
             if (!Id.HasValue)
+                return BadRequest("Debe especificar un Id.");
+            var idUser = User.FindFirst("Id")?.Value;
+            var user = await _userManager.FindByIdAsync(idUser);
+
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
             {
-                return BadRequest();
+                var actor = _actor.GetById(Id.Value);
+
+                if (actor is null)
+                    return NotFound("Actor no encontrado.");
+
+                return Ok(_mapper.Map<ActorResponseDto>(actor));
             }
-            Actor actor = _actor.GetById(Id.Value);
-            if (actor is null)
-            {
-                return NotFound();
-            }
-            return Ok(_mapper.Map<ActorResponseDto>(actor));
+
+            return Unauthorized();
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(ActorRequestDto actorRequestDto)
         {
             if (!ModelState.IsValid)
@@ -60,6 +85,7 @@ namespace Flixdi.WebApi.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? Id, ActorRequestDto actorRequestDto)
         {
             if (!Id.HasValue)
@@ -81,6 +107,7 @@ namespace Flixdi.WebApi.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? Id)
         {
             if (!Id.HasValue)

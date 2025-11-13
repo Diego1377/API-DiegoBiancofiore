@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Flixdi.Application;
 using Flixdi.Application.Dtos.Actor;
+using Flixdi.Application.Dtos.Director;
 using Flixdi.Application.Dtos.Pelicula;
 using Flixdi.Entities;
 using Flixdi.Entities.MicrosoftIdentity;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
 
 namespace Flixdi.WebApi.Controllers
 {
@@ -30,11 +32,13 @@ namespace Flixdi.WebApi.Controllers
 
         [HttpGet]
         [Route("All")]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> All()
         {
             var id = User.FindFirst("Id").Value.ToString();
             var user = _userManager.FindByIdAsync(id).Result;
-            if (_userManager.IsInRoleAsync(user, "Administrador").Result)
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
             {
                 var name = User.FindFirst("name");
                 var a = User.Claims;
@@ -46,21 +50,31 @@ namespace Flixdi.WebApi.Controllers
 
         [HttpGet]
         [Route("ById")]
+        [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> ById(int? Id)
         {
             if (!Id.HasValue)
+                return BadRequest("Debe especificar un Id.");
+
+            var idUser = User.FindFirst("Id")?.Value;
+            var user = await _userManager.FindByIdAsync(idUser);
+
+            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                await _userManager.IsInRoleAsync(user, "Cliente"))
             {
-                return BadRequest();
+                var pelicula = _pelicula.GetById(Id.Value);
+
+                if (pelicula is null)
+                    return NotFound("Pelicula no encontrado.");
+
+                return Ok(_mapper.Map<PeliculaResponseDto>(pelicula));
             }
-            Pelicula pelicula = _pelicula.GetById(Id.Value);
-            if (pelicula is null)
-            {
-                return NotFound();
-            }
-            return Ok(_mapper.Map<PeliculaResponseDto>(pelicula));
+
+            return Unauthorized();
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(PeliculaRequestDto peliculaRequestDto)
         {
             if (!ModelState.IsValid) return BadRequest();
@@ -70,6 +84,7 @@ namespace Flixdi.WebApi.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? Id, PeliculaRequestDto peliculaRequestDto)
         {
             if (!Id.HasValue) return BadRequest();
@@ -83,6 +98,7 @@ namespace Flixdi.WebApi.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? Id)
         {
             if (!Id.HasValue) return BadRequest();
