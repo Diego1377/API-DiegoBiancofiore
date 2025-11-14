@@ -35,16 +35,24 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> All()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<DirectorResponseDto>>(_director.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<DirectorResponseDto>>(_director.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todos los Directores.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpGet]
@@ -52,60 +60,92 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> ById(int? Id)
         {
-            if (!Id.HasValue)
-                return BadRequest("Debe especificar un Id.");
-
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
-
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var diretor = _director.GetById(Id.Value);
+                if (!Id.HasValue)
+                    return BadRequest("Debe especificar un Id.");
 
-                if (diretor is null)
-                    return NotFound("Director no encontrado.");
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-                return Ok(_mapper.Map<DirectorResponseDto>(diretor));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var diretor = _director.GetById(Id.Value);
+
+                    if (diretor is null)
+                        return NotFound("Director no encontrado.");
+
+                    return Ok(_mapper.Map<DirectorResponseDto>(diretor));
+                }
+
+                return Unauthorized();
             }
-
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el director por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(DirectorRequestDto directorRequestDto)
         {
-            if (!ModelState.IsValid) return BadRequest();
-            var director = _mapper.Map<Director>(directorRequestDto);
-            _director.Save(director);
-            return Ok(director.Id);
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest();
+                var director = _mapper.Map<Director>(directorRequestDto);
+                _director.Save(director);
+                return Ok(director.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear el director.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? Id, DirectorRequestDto directorRequestDto)
         {
-            if (!Id.HasValue) return BadRequest();
-            if (!ModelState.IsValid) return BadRequest();
-            Director directorBack = _director.GetById(Id.Value);
-            if (directorBack is null) return NotFound();
+            try
+            {
+                if (!Id.HasValue) return BadRequest();
+                if (!ModelState.IsValid) return BadRequest();
+                Director directorBack = _director.GetById(Id.Value);
+                if (directorBack is null) return NotFound();
 
-            directorBack = _mapper.Map<Director>(directorRequestDto);
-            _director.Save(directorBack);
-            return Ok(directorBack);
+                directorBack = _mapper.Map<Director>(directorRequestDto);
+                _director.Save(directorBack);
+                return Ok(directorBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar el director.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? Id)
         {
-            if (!Id.HasValue) return BadRequest();
-            if (!ModelState.IsValid) return BadRequest();
-            Director directorBack = _director.GetById(Id.Value);
-            if (directorBack is null) return NotFound();
-            _director.Delete(directorBack.Id);
-            return Ok();
+            try
+            {
+                if (!Id.HasValue) return BadRequest();
+                if (!ModelState.IsValid) return BadRequest();
+                Director directorBack = _director.GetById(Id.Value);
+                if (directorBack is null) return NotFound();
+                _director.Delete(directorBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al borrar el director.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 

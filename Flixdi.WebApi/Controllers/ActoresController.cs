@@ -34,16 +34,24 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> All()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<ActorResponseDto>>(_actor.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<ActorResponseDto>>(_actor.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todos los actores.");
+                return StatusCode(500, "Ocurrió un error al proceprocesar la solicitud.");
+            }
         }
 
 
@@ -52,77 +60,108 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> ById(int? Id)
         {
-            if (!Id.HasValue)
-                return BadRequest("Debe especificar un Id.");
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
-
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var actor = _actor.GetById(Id.Value);
+                if (!Id.HasValue)
+                    return BadRequest("Debe especificar un Id.");
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-                if (actor is null)
-                    return NotFound("Actor no encontrado.");
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var actor = _actor.GetById(Id.Value);
 
-                return Ok(_mapper.Map<ActorResponseDto>(actor));
+                    if (actor is null)
+                        return NotFound("Actor no encontrado.");
+
+                    return Ok(_mapper.Map<ActorResponseDto>(actor));
+                }
+
+                return Unauthorized();
             }
-
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el actor por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(ActorRequestDto actorRequestDto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest();
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest();
+                }
+                var actor = _mapper.Map<Actor>(actorRequestDto);
+                _actor.Save(actor);
+                return Ok(actor.Id);
             }
-            var actor = _mapper.Map<Actor>(actorRequestDto);
-            _actor.Save(actor);
-            return Ok(actor.Id);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear el actor.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? Id, ActorRequestDto actorRequestDto)
         {
-            if (!Id.HasValue)
+            try
             {
-                return BadRequest();
+                if (!Id.HasValue)
+                {
+                    return BadRequest();
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest();
+                }
+                Actor actorBack = _actor.GetById(Id.Value);
+                if (actorBack is null)
+                {
+                    return NotFound();
+                }
+                actorBack = _mapper.Map<Actor>(actorRequestDto);
+                _actor.Save(actorBack);
+                return Ok(actorBack);
             }
-            if (!ModelState.IsValid)
+            catch (Exception ex)
             {
-                return BadRequest();
+                _logger.LogError(ex, "Error al editar el actor.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
             }
-            Actor actorBack = _actor.GetById(Id.Value);
-            if (actorBack is null)
-            {
-                return NotFound();
-            }
-            actorBack = _mapper.Map<Actor>(actorRequestDto);
-            _actor.Save(actorBack);
-            return Ok(actorBack);
         }
 
         [HttpDelete]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? Id)
         {
-            if (!Id.HasValue)
+            try
             {
-                return BadRequest();
+                if (!Id.HasValue)
+                {
+                    return BadRequest();
+                }
+                if (!ModelState.IsValid) return BadRequest();
+                Actor actorBack = _actor.GetById(Id.Value);
+                if (actorBack is null)
+                {
+                    return NotFound();
+                }
+                _actor.Delete(actorBack.Id);
+                return Ok();
             }
-            if (!ModelState.IsValid) return BadRequest();
-            Actor actorBack = _actor.GetById(Id.Value);
-            if (actorBack is null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Error al borrar el actor.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
             }
-            _actor.Delete(actorBack.Id);
-            return Ok();
         }
     }
-
 }

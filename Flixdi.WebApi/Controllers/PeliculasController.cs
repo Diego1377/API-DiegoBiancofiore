@@ -35,17 +35,25 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> All()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<PeliculaResponseDto>>(_pelicula.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<PeliculaResponseDto>>(_pelicula.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
-            
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todos las peliculas.");
+                return StatusCode(500, "Ocurrió un error al proceprocesar la solicitud.");
+            }
+
         }
 
         [HttpGet]
@@ -53,60 +61,92 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> ById(int? Id)
         {
-            if (!Id.HasValue)
-                return BadRequest("Debe especificar un Id.");
-
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
-
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var pelicula = _pelicula.GetById(Id.Value);
+                if (!Id.HasValue)
+                    return BadRequest("Debe especificar un Id.");
 
-                if (pelicula is null)
-                    return NotFound("Pelicula no encontrado.");
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-                return Ok(_mapper.Map<PeliculaResponseDto>(pelicula));
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var pelicula = _pelicula.GetById(Id.Value);
+
+                    if (pelicula is null)
+                        return NotFound("Pelicula no encontrado.");
+
+                    return Ok(_mapper.Map<PeliculaResponseDto>(pelicula));
+                }
+
+                return Unauthorized();
             }
-
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener la pelicula por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(PeliculaRequestDto peliculaRequestDto)
         {
-            if (!ModelState.IsValid) return BadRequest();
-            var pelicula = _mapper.Map<Pelicula>(peliculaRequestDto);
-            _pelicula.Save(pelicula);
-            return Ok(pelicula.Id);
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest();
+                var pelicula = _mapper.Map<Pelicula>(peliculaRequestDto);
+                _pelicula.Save(pelicula);
+                return Ok(pelicula.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear la pelicula.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? Id, PeliculaRequestDto peliculaRequestDto)
         {
-            if (!Id.HasValue) return BadRequest();
-            if (!ModelState.IsValid) return BadRequest();
-            Pelicula peliculaBack = _pelicula.GetById(Id.Value);
-            if (peliculaBack is null) return NotFound();
+            try
+            {
+                if (!Id.HasValue) return BadRequest();
+                if (!ModelState.IsValid) return BadRequest();
+                Pelicula peliculaBack = _pelicula.GetById(Id.Value);
+                if (peliculaBack is null) return NotFound();
 
-            peliculaBack = _mapper.Map<Pelicula>(peliculaRequestDto);
-            _pelicula.Save(peliculaBack);
-            return Ok(peliculaBack);
+                peliculaBack = _mapper.Map<Pelicula>(peliculaRequestDto);
+                _pelicula.Save(peliculaBack);
+                return Ok(peliculaBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar la pelicula.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? Id)
         {
-            if (!Id.HasValue) return BadRequest();
-            if (!ModelState.IsValid) return BadRequest();
-            Pelicula peliculaBack = _pelicula.GetById(Id.Value);
-            if (peliculaBack is null) return NotFound();
-            _pelicula.Delete(peliculaBack.Id);
-            return Ok();
+            try
+            {
+                if (!Id.HasValue) return BadRequest();
+                if (!ModelState.IsValid) return BadRequest();
+                Pelicula peliculaBack = _pelicula.GetById(Id.Value);
+                if (peliculaBack is null) return NotFound();
+                _pelicula.Delete(peliculaBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al borrar la pelicula.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 

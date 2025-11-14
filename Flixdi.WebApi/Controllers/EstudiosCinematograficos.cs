@@ -35,16 +35,24 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> All()
         {
-            var id = User.FindFirst("Id").Value.ToString();
-            var user = _userManager.FindByIdAsync(id).Result;
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var name = User.FindFirst("name");
-                var a = User.Claims;
-                return Ok(_mapper.Map<IList<EstudioCinematograficoResponseDto>>(_estudio.GetAll()));
+                var id = User.FindFirst("Id").Value.ToString();
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var name = User.FindFirst("name");
+                    var a = User.Claims;
+                    return Ok(_mapper.Map<IList<EstudioCinematograficoResponseDto>>(_estudio.GetAll()));
+                }
+                return Unauthorized();
             }
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todos los Estudios Cinematofraficos.");
+                return StatusCode(500, "Ocurrió un error al proceprocesar la solicitud.");
+            }
         }
 
         [HttpGet]
@@ -52,58 +60,90 @@ namespace Flixdi.WebApi.Controllers
         [Authorize(Roles = "Administrador, Cliente")]
         public async Task<IActionResult> ById(int? Id)
         {
-            if (!Id.HasValue)
-                return BadRequest("Debe especificar un Id.");
-            var idUser = User.FindFirst("Id")?.Value;
-            var user = await _userManager.FindByIdAsync(idUser);
-
-            if (await _userManager.IsInRoleAsync(user, "Administrador") ||
-                await _userManager.IsInRoleAsync(user, "Cliente"))
+            try
             {
-                var estudio = _estudio.GetById(Id.Value);
+                if (!Id.HasValue)
+                    return BadRequest("Debe especificar un Id.");
+                var idUser = User.FindFirst("Id")?.Value;
+                var user = await _userManager.FindByIdAsync(idUser);
 
-                if (estudio is null)
-                    return NotFound("Estudio no encontrado.");
+                if (await _userManager.IsInRoleAsync(user, "Administrador") ||
+                    await _userManager.IsInRoleAsync(user, "Cliente"))
+                {
+                    var estudio = _estudio.GetById(Id.Value);
 
-                return Ok(_mapper.Map<EstudioCinematograficoResponseDto>(estudio));
+                    if (estudio is null)
+                        return NotFound("Estudio no encontrado.");
+
+                    return Ok(_mapper.Map<EstudioCinematograficoResponseDto>(estudio));
+                }
+
+                return Unauthorized();
             }
-
-            return Unauthorized();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener el estudio por Id.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Crear(EstudioCinematograficoRequestDto estudioCinematograficoRequestDto)
         {
-            if (!ModelState.IsValid) return BadRequest();
-            var estudio = _mapper.Map<EstudioCinematografico>(estudioCinematograficoRequestDto);
-            _estudio.Save(estudio);
-            return Ok(estudio.Id);
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest();
+                var estudio = _mapper.Map<EstudioCinematografico>(estudioCinematograficoRequestDto);
+                _estudio.Save(estudio);
+                return Ok(estudio.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al crear el estudio.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpPut]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Editar(int? Id, EstudioCinematograficoRequestDto estudioCinematograficoRequestDto)
         {
-            if (!Id.HasValue) return BadRequest();
-            if (!ModelState.IsValid) return BadRequest();
-            EstudioCinematografico estudioBack = _estudio.GetById(Id.Value);
-            if (estudioBack is null) return NotFound();
-            estudioBack = _mapper.Map<EstudioCinematografico>(estudioCinematograficoRequestDto);
-            _estudio.Save(estudioBack);
-            return Ok(estudioBack);
+            try
+            {
+                if (!Id.HasValue) return BadRequest();
+                if (!ModelState.IsValid) return BadRequest();
+                EstudioCinematografico estudioBack = _estudio.GetById(Id.Value);
+                if (estudioBack is null) return NotFound();
+                estudioBack = _mapper.Map<EstudioCinematografico>(estudioCinematograficoRequestDto);
+                _estudio.Save(estudioBack);
+                return Ok(estudioBack);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al editar el estudio.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
 
         [HttpDelete]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Borrar(int? Id)
         {
-            if (!Id.HasValue) return BadRequest();
-            if (!ModelState.IsValid) return BadRequest();
-            EstudioCinematografico estudioBack = _estudio.GetById(Id.Value);
-            if (estudioBack is null) return NotFound();
-            _estudio.Delete(estudioBack.Id);
-            return Ok();
+            try
+            {
+                if (!Id.HasValue) return BadRequest();
+                if (!ModelState.IsValid) return BadRequest();
+                EstudioCinematografico estudioBack = _estudio.GetById(Id.Value);
+                if (estudioBack is null) return NotFound();
+                _estudio.Delete(estudioBack.Id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al borrar el estudio.");
+                return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
+            }
         }
     }
 
