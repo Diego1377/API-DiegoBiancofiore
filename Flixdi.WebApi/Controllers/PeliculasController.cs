@@ -50,7 +50,7 @@ namespace Flixdi.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos las peliculas.");
+                _logger.LogError(ex, "Error al obtener todas las peliculas.");
                 return StatusCode(500, "Ocurrió un error al proceprocesar la solicitud.");
             }
 

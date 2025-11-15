@@ -50,7 +50,7 @@ namespace Flixdi.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los Estudios Cinematofraficos.");
+                _logger.LogError(ex, "Error al obtener todos los estudios cinematofraficos.");
                 return StatusCode(500, "Ocurrió un error al proceprocesar la solicitud.");
             }
         }

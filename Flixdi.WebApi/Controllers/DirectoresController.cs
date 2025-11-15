@@ -50,7 +50,7 @@ namespace Flixdi.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los Directores.");
+                _logger.LogError(ex, "Error al obtener todos los directores.");
                 return StatusCode(500, "Ocurrió un error al procesar la solicitud.");
             }
         }
